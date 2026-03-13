@@ -96,6 +96,7 @@ invoke = "once"
 working-dir = "root"
 path-args = "file"
 include = [ "*.md" ]
+exclude = [ "docs/superpowers/**/*.md" ]
 cmd = [
     "$PRECIOUS_ROOT/node_modules/.bin/prettier",
     "--print-width", "100",

@@ -461,6 +461,45 @@ functions:
           fi;
           ./bin/mongo $MONGO_ARGS --nodb --eval 'assert.soon(function(x){try{var d = new Mongo("localhost:${mongod_port}"); return true} catch(e){return false}}, "timed out connection")'
 
+  "create sharded cluster":
+    - command: shell.exec
+      params:
+        working_dir: src/github.com/mongodb/mongo-tools
+        background: true
+        script: |
+          set -x
+          set -v
+          set -e
+          echo "starting sharded cluster"
+          MONGO_ARGS="${mongo_args}"
+          NODE_OPTIONS=""
+          mkdir -p /data/db/
+          if [ "${USE_TLS}" = "true" ]; then
+            NODE_OPTIONS="${replsettest_tls_config}"
+            MONGO_ARGS="${mongo_args_tls}"
+          elif [ "${USE_SSL}" = "true" ]; then
+            NODE_OPTIONS="${replsettest_ssl_config}"
+          fi
+          # use jsconfig.json to set baseUrl to find libs
+          mv test/shell_common/jsconfig.json ./
+          if [ -n "${load_libs_version}" ]; then
+            IMPORT_LOAD_LIBS="await import(\"../shell_common/libs/load_libs-${load_libs_version}.js\");"
+          fi
+          PATH=./bin:$PATH ./bin/mongo $MONGO_ARGS --nodb --eval "$IMPORT_LOAD_LIBS; TestData = new Object(); TestData.minPort=\"${mongod_port}\"; var st = new ShardingTest({shards: 1, mongos: 1, other: {mongosOptions: {port: ${mongod_port}, $NODE_OPTIONS}, shardOptions: {$NODE_OPTIONS}}}); while(true){sleep(1000);}"
+
+    - command: shell.exec
+      params:
+        working_dir: src/github.com/mongodb/mongo-tools
+        script: |
+          set -x
+          set -v
+          set -e
+          MONGO_ARGS="${mongo_args}"
+          if [ "${USE_TLS}" = "true" ]; then
+            MONGO_ARGS="${mongo_args_tls}"
+          fi
+          ./bin/mongo $MONGO_ARGS --nodb --eval 'assert.soon(function(x){try{var d = new Mongo("localhost:${mongod_port}"); return true} catch(e){return false}}, "timed out connection")'
+
   "add-aws-auth-variables-to-file":
     - command: shell.exec
       type: test
@@ -1522,6 +1561,153 @@ tasks:
       - func: "run make target"
         vars:
           target: test:integration -ssl=true -topology=replSet ${testArgs}
+
+  - name: integration-4.4-sharded
+    tags: ["4.4", "sharded"]
+    commands:
+      - func: "fetch source"
+      - command: expansions.update
+      - func: "download mongod and shell"
+        vars:
+          mongo_version: "4.4"
+      - func: "create sharded cluster"
+        vars:
+          USE_TLS: "true"
+      - func: "run make target"
+        vars:
+          target: build
+      - func: "run make target"
+        vars:
+          target: test:integration -ssl=true -topology=sharded ${testArgs}
+
+  - name: integration-5.0-sharded
+    tags: ["5.0", "sharded"]
+    commands:
+      - func: "fetch source"
+      - command: expansions.update
+      - func: "download mongod and shell"
+        vars:
+          mongo_version: "5.0"
+      - func: "create sharded cluster"
+        vars:
+          USE_TLS: "true"
+      - func: "run make target"
+        vars:
+          target: build
+      - func: "run make target"
+        vars:
+          target: test:integration -ssl=true -topology=sharded ${testArgs}
+
+  - name: integration-6.0-sharded
+    tags: ["6.0", "sharded"]
+    commands:
+      - func: "fetch source"
+      - command: expansions.update
+      - func: "download mongod and shell"
+        vars:
+          mongo_version: "6.0"
+      - func: "create sharded cluster"
+        vars:
+          USE_TLS: "true"
+      - func: "run make target"
+        vars:
+          target: build
+      - func: "run make target"
+        vars:
+          target: test:integration -ssl=true -topology=sharded ${testArgs}
+
+  - name: integration-7.0-sharded
+    tags: ["7.0", "sharded"]
+    commands:
+      - func: "fetch source"
+      - command: expansions.update
+      - func: "download mongod and shell"
+        vars:
+          mongo_version: "7.0"
+      - func: "create sharded cluster"
+        vars:
+          USE_TLS: "true"
+      - func: "run make target"
+        vars:
+          target: build
+      - func: "run make target"
+        vars:
+          target: test:integration -ssl=true -topology=sharded ${testArgs}
+
+  - name: integration-8.0-sharded
+    tags: ["8.0", "sharded"]
+    commands:
+      - func: "fetch source"
+      - command: expansions.update
+      - func: "download mongod and shell"
+        vars:
+          mongo_version: "8.0"
+      - func: "create sharded cluster"
+        vars:
+          USE_TLS: "true"
+      - func: "run make target"
+        vars:
+          target: build
+      - func: "run make target"
+        vars:
+          target: test:integration -ssl=true -topology=sharded ${testArgs}
+
+  - name: integration-8.1-sharded
+    tags: ["8.1", "sharded"]
+    commands:
+      - func: "fetch source"
+      - command: expansions.update
+      - func: "download mongod and shell"
+        vars:
+          mongo_version: "8.1.0"
+      - func: "create sharded cluster"
+        vars:
+          USE_TLS: "true"
+          load_libs_version: "8.1"
+      - func: "run make target"
+        vars:
+          target: build
+      - func: "run make target"
+        vars:
+          target: test:integration -ssl=true -topology=sharded ${testArgs}
+
+  - name: integration-8.2-sharded
+    tags: ["8.2", "sharded"]
+    commands:
+      - func: "fetch source"
+      - command: expansions.update
+      - func: "download mongod and shell"
+        vars:
+          mongo_version: "8.2.0"
+      - func: "create sharded cluster"
+        vars:
+          USE_TLS: "true"
+          load_libs_version: "8.2"
+      - func: "run make target"
+        vars:
+          target: build
+      - func: "run make target"
+        vars:
+          target: test:integration -ssl=true -topology=sharded ${testArgs}
+
+  - name: integration-latest-sharded
+    tags: ["latest", "sharded"]
+    commands:
+      - func: "fetch source"
+      - command: expansions.update
+      - func: "download mongod and shell"
+        vars:
+          mongo_version: "latest"
+      - func: "create sharded cluster"
+        vars:
+          USE_TLS: "true"
+          load_libs_version: *max_server_version
+      - func: "run make target"
+        vars:
+          target: build
+      - func: "run make target"
+        vars:
+          target: test:integration -ssl=true -topology=sharded ${testArgs}
 
   - name: aws-auth-latest
     tags: ["latest", "aws-auth"]
